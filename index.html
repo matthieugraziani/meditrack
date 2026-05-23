@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediTrack - Pharmacie Familiale</title>
+  <link rel="stylesheet" href="style.css">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Base de données BDPM
+    const BDPM_DATABASE = [
+      { nom: "DOLIPRANE", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
+      { nom: "DAFALGAN", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
+      { nom: "EFFERALGAN", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
+      { nom: "PARACETAMOL", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
+      { nom: "IBUPROFENE", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
+      { nom: "ADVIL", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
+      { nom: "NUROFEN", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
+      { nom: "VOLTARENE", dci: "DICLOFENAC", dosages: ["50mg", "75mg"], forme: "comprimé" },
+      { nom: "AMOXICILLINE", dci: "AMOXICILLINE", dosages: ["500mg", "1g"], forme: "comprimé" },
+      { nom: "AUGMENTIN", dci: "AMOXICILLINE ACIDE CLAVULANIQUE", dosages: ["500mg/62.5mg", "1g/125mg"], forme: "comprimé" },
+      { nom: "CLAMOXYL", dci: "AMOXICILLINE", dosages: ["500mg", "1g"], forme: "gélule" },
+      { nom: "AZITHROMYCINE", dci: "AZITHROMYCINE", dosages: ["250mg", "500mg"], forme: "comprimé" },
+      { nom: "SPASFON", dci: "PHLOROGLUCINOL", dosages: ["80mg"], forme: "comprimé" },
+      { nom: "SMECTA", dci: "DIOSMECTITE", dosages: ["3g"], forme: "sachet" },
+      { nom: "ULTRA-LEVURE", dci: "SACCHAROMYCES BOULARDII", dosages: ["200mg"], forme: "gélule" },
+      { nom: "IMODIUM", dci: "LOPERAMIDE", dosages: ["2mg"], forme: "gélule" },
+      { nom: "INEXIUM", dci: "ESOMEPRAZOLE", dosages: ["20mg", "40mg"], forme: "comprimé" },
+      { nom: "MOPRAL", dci: "OMEPRAZOLE", dosages: ["20mg"], forme: "gélule" },
+      { nom: "KARDEGIC", dci: "ASPIRINE", dosages: ["75mg", "160mg"], forme: "sachet" },
+      { nom: "ASPEGIC", dci: "ASPIRINE", dosages: ["100mg", "500mg", "1000mg"], forme: "sachet" },
+      { nom: "LEVOTHYROX", dci: "LEVOTHYROXINE", dosages: ["25µg", "50µg", "75µg", "100µg", "125µg"], forme: "comprimé" },
+      { nom: "METFORMINE", dci: "METFORMINE", dosages: ["500mg", "850mg", "1000mg"], forme: "comprimé" },
+      { nom: "XANAX", dci: "ALPRAZOLAM", dosages: ["0.25mg", "0.5mg"], forme: "comprimé" },
+      { nom: "LEXOMIL", dci: "BROMAZEPAM", dosages: ["6mg"], forme: "comprimé" },
+      { nom: "VENTOLINE", dci: "SALBUTAMOL", dosages: ["100µg"], forme: "spray" },
+      { nom: "SERETIDE", dci: "SALMETEROL FLUTICASONE", dosages: ["50/250µg"], forme: "diskus" },
+      { nom: "BIAFINE", dci: "TROLAMINE", dosages: ["tube 100ml"], forme: "émulsion" },
+      { nom: "SERUM PHYSIOLOGIQUE", dci: "CHLORURE DE SODIUM", dosages: ["5ml", "10ml"], forme: "unidose" }
+    ];
+
+    // Fonctions OCR
+    const normalizeText = (text) => {
+      return text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    };
+
+    const extractDosage = (text) => {
+      const patterns = [
+        /(\d+\.?\d*)\s*(MG|G|ML|MCG|µG|UI)/i,
+        /(\d+\.?\d*)\s*(CP|COMPRIME|GELULE|SACHET|ML)/i
+      ];
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match) {
+          let value = match[1];
+          let unit = match[2].toLowerCase();
+          if (unit === 'mcg') unit = 'µg';
+          if (unit.includes('comprim') || unit.includes('gelule')) unit = 'mg';
+          return value + unit;
+        }
+      }
+      return null;
+    };
+
+    const extractFrequency = (text) => {
+      const patterns = [
+        /(\d+)\s*(?:FOIS|X)\s*PAR\s*JOUR/i,
+        /(\d+)\s*PAR\s*JOUR/i,
+        /MATIN\s*ET\s*SOIR/i,
+        /MATIN\s*MIDI\s*SOIR/i
+      ];
+      for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match) {
+          if (pattern.source.includes('MATIN\\s*ET\\s*SOIR')) return 2;
+          if (pattern.source.includes('MATIN\\s*MIDI\\s*SOIR')) return 3;
+          return parseInt(match[1]) || 1;
+        }
+      }
+      return 2;
+    };
+
+    const searchInBDPM = (text) => {
+      const normalizedText = normalizeText(text);
+      for (const med of BDPM_DATABASE) {
+        const normalizedNom = normalizeText(med.nom);
+        if (normalizedText.includes(normalizedNom)) return med;
+      }
+      return null;
+    };
+
+    // Composants Lucide
+    const Home = () => <i data-lucide="home"></i>;
+    const Users = () => <i data-lucide="users"></i>;
+    const Baby = () => <i data-lucide="baby"></i>;
+    const UserPlus = () => <i data-lucide="user-plus"></i>;
+    const Pill = () => <i data-lucide="pill"></i>;
+    const Plus = () => <i data-lucide="plus"></i>;
+    const Camera = () => <i data-lucide="camera"></i>;
+    const X = () => <i data-lucide="x"></i>;
+    const Check = () => <i data-lucide="check"></i>;
+    const Calendar = () => <i data-lucide="calendar"></i>;
+    const AlertCircle = () => <i data-lucide="alert-circle"></i>;
+    const ChevronLeft = () => <i data-lucide="chevron-left"></i>;
+    const ChevronRight = () => <i data-lucide="chevron-right"></i>;
+
+    const MedicationApp = () => {
+      const [view, setView] = useState('pharmacy'); // pharmacy, parents, children, addPerson, scan, addMed
+      const [selectedPerson, setSelectedPerson] = useState(null);
+      
+      const [parents, setParents] = useState([
+        { id: 1, name: 'Matthieu GRAZIANI', avatar: '👨', color: '#4ecdc4', type: 'parent' },
+        { id: 2, name: 'Elisabeth GRAZIANI', avatar: '👩', color: '#ff6b9d', type: 'parent' }
+      ]);
+      
+      const [children, setChildren] = useState([
+        { id: 3, name: 'Léo', avatar: '👦', age: 17, color: '#ffd93d', type: 'child' },
+        { id: 4, name: 'Lilly', avatar: '👧', age: 13, color: '#a8e6cf', type: 'child' },
+        { id: 5, name: 'Lou', avatar: '👧', age: 11, color: '#ff9e7d', type: 'child' }
+      ]);
+      
+      const [medications, setMedications] = useState({
+        1: [
+          { id: 1, name: 'Doliprane 1000mg', dosage: '1 comprimé', times: ['08:00', '20:00'], endDate: '2026-02-20', taken: {} }
+        ],
+        2: [
+          { id: 2, name: 'Levothyrox', dosage: '75µg', times: ['07:00'], endDate: '2026-03-08', taken: {} }
+        ],
+        3: [],
+        4: []
+      });
+      
+      const [homePharmacy, setHomePharmacy] = useState([
+        { id: 1, name: 'Doliprane', dosages: ['500mg', '1000mg'], quantity: 24, expiryDate: '2026-12-31', category: 'Antalgique', image: '💊' },
+        { id: 2, name: 'Ibuprofène', dosages: ['200mg', '400mg'], quantity: 16, expiryDate: '2026-08-15', category: 'Anti-inflammatoire', image: '💊' },
+        { id: 3, name: 'Spasfon', dosages: ['80mg'], quantity: 12, expiryDate: '2027-03-20', category: 'Antispasmodique', image: '💊' },
+        { id: 4, name: 'Smecta', dosages: ['3g'], quantity: 8, expiryDate: '2026-06-10', category: 'Digestif', image: '📦' },
+        { id: 5, name: 'Biafine', dosages: ['tube 100ml'], quantity: 2, expiryDate: '2026-11-30', category: 'Soin', image: '🧴' },
+        { id: 6, name: 'Sérum physiologique', dosages: ['5ml'], quantity: 30, expiryDate: '2027-01-15', category: 'Soin', image: '💧' }
+      ]);
+
+      const [newPerson, setNewPerson] = useState({ name: '', type: 'parent', avatar: '👤', age: '' });
+      const [scanFile, setScanFile] = useState(null);
+      const [isProcessing, setIsProcessing] = useState(false);
+      const [ocrProgress, setOcrProgress] = useState(0);
+      const [ocrStatus, setOcrStatus] = useState('');
+      const [detectedMedications, setDetectedMedications] = useState([]);
+      const [newMedication, setNewMedication] = useState({
+        name: '', dosage: '', times: [''], endDate: ''
+      });
+      const [showNotification, setShowNotification] = useState(false);
+      const [notificationMessage, setNotificationMessage] = useState('');
+      const [currentWeekOffset, setCurrentWeekOffset] = useState(0);
+
+      useEffect(() => {
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      // Fonctions utilitaires
+      const isExpired = (date) => new Date(date) < new Date();
+      const isExpiringSoon = (date) => {
+        const days = Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24));
+        return days <= 90 && days > 0;
+      };
+
+      const updatePharmacyQuantity = (id, change) => {
+        setHomePharmacy(prev => prev.map(item => 
+          item.id === id ? { ...item, quantity: Math.max(0, item.quantity + change) } : item
+        ));
+      };
+
+      const removePharmacyItem = (id) => {
+        setHomePharmacy(prev => prev.filter(item => item.id !== id));
+        setNotificationMessage('Médicament retiré');
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      };
+
+      const addPerson = () => {
+        if (!newPerson.name) return;
+        const newId = Math.max(...[...parents, ...children].map(p => p.id), 0) + 1;
+        const person = {
+          id: newId,
+          name: newPerson.name,
+          avatar: newPerson.avatar,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
+          ...(newPerson.type === 'child' ? { age: parseInt(newPerson.age) || 0 } : {}),
+          type: newPerson.type
+        };
+        
+        if (newPerson.type === 'parent') {
+          setParents([...parents, person]);
+        } else {
+          setChildren([...children, person]);
+        }
+        
+        setMedications(prev => ({ ...prev, [newId]: [] }));
+        setNewPerson({ name: '', type: 'parent', avatar: '👤', age: '' });
+        setView('pharmacy');
+        setNotificationMessage('Personne ajoutée !');
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      };
+
+      const handleScanUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        setScanFile(URL.createObjectURL(file));
+        setIsProcessing(true);
+        setOcrProgress(0);
+        setOcrStatus('Initialisation...');
+        
+        try {
+          const worker = await Tesseract.createWorker('fra', 1, {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                setOcrProgress(Math.round(m.progress * 100));
+                setOcrStatus(`Analyse: ${Math.round(m.progress * 100)}%`);
+              }
+            }
+          });
+          
+          const { data: { text } } = await worker.recognize(file);
+          await worker.terminate();
+          
+          setOcrStatus('Recherche BDPM...');
+          const lines = text.split('\n').filter(l => l.trim().length > 0);
+          const found = [];
+          
+          for (const line of lines) {
+            const med = searchInBDPM(line);
+            if (med) {
+              const dosage = extractDosage(line) || med.dosages[0];
+              const freq = extractFrequency(line);
+              const times = freq === 1 ? ['08:00'] : freq === 2 ? ['08:00', '20:00'] : ['08:00', '14:00', '20:00'];
+              const endDate = new Date();
+              endDate.setDate(endDate.getDate() + 7);
+              
+              found.push({
+                name: med.nom,
+                dci: med.dci,
+                dosage,
+                times,
+                endDate: endDate.toISOString().split('T')[0]
+              });
+            }
+          }
+          
+          setDetectedMedications(found);
+          if (found.length > 0) {
+            setNewMedication(found[0]);
+            setOcrStatus(`✅ ${found.length} médicament(s) détecté(s)`);
+          } else {
+            setOcrStatus('⚠️ Aucun médicament reconnu');
+          }
+          
+          setOcrProgress(100);
+          setIsProcessing(false);
+          setTimeout(() => setView('addMed'), 1500);
+          
+        } catch (error) {
+          console.error('Erreur OCR:', error);
+          setOcrStatus('❌ Erreur');
+          setIsProcessing(false);
+          setTimeout(() => setView('addMed'), 1500);
+        }
+      };
+
+      const addMedication = () => {
+        if (!selectedPerson || !newMedication.name) return;
+        
+        const newMed = {
+          id: Date.now(),
+          ...newMedication,
+          color: [...parents, ...children].find(p => p.id === selectedPerson).color,
+          taken: {}
+        };
+        
+        setMedications(prev => ({
+          ...prev,
+          [selectedPerson]: [...(prev[selectedPerson] || []), newMed]
+        }));
+        
+        setNewMedication({ name: '', dosage: '', times: [''], endDate: '' });
+        setView('pharmacy');
+        setNotificationMessage('✅ Médicament ajouté !');
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      };
+
+      const getWeekDates = (offset = 0) => {
+        const today = new Date();
+        const currentDay = today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - (currentDay === 0 ? 6 : currentDay - 1) + (offset * 7));
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
+          dates.push(date);
+        }
+        return dates;
+      };
+
+      const toggleMedication = (personId, medId, time, dateStr) => {
+        const key = `${dateStr}-${time}`;
+        setMedications(prev => ({
+          ...prev,
+          [personId]: prev[personId].map(med => 
+            med.id === medId 
+              ? { ...med, taken: { ...med.taken, [key]: !med.taken?.[key] } }
+              : med
+          )
+        }));
+      };
+
+      // Navigation en bas
+      const BottomNav = () => (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: 'white',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+          display: 'flex',
+          justifyContent: 'space-around',
+          padding: '12px 0',
+          zIndex: 100
+        }}>
+          <button onClick={() => setView('pharmacy')} style={{
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            color: view === 'pharmacy' ? '#667eea' : '#718096',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            <Home />
+            Pharmacie
+          </button>
+          
+          <button onClick={() => setView('parents')} style={{
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            color: view === 'parents' ? '#667eea' : '#718096',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            <Users />
+            Parents
+          </button>
+          
+          <button onClick={() => setView('children')} style={{
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            color: view === 'children' ? '#667eea' : '#718096',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            <Baby />
+            Enfants
+          </button>
+          
+          <button onClick={() => setView('addPerson')} style={{
+            background: 'none',
+            border: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '4px',
+            cursor: 'pointer',
+            color: view === 'addPerson' ? '#667eea' : '#718096',
+            fontSize: '12px',
+            fontWeight: '600'
+          }}>
+            <UserPlus />
+            Ajouter
+          </button>
+        </div>
+      );
+
+      // VUE PHARMACIE (accueil)
+      if (view === 'pharmacy') {
+        const expired = homePharmacy.filter(item => isExpired(item.expiryDate));
+        const expiringSoon = homePharmacy.filter(item => isExpiringSoon(item.expiryDate) && !isExpired(item.expiryDate));
+        const lowStock = homePharmacy.filter(item => item.quantity <= 5);
+        
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #48bb78 0%, #38a169 100%)', padding: '32px 20px', color: 'white' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>🏠 Pharmacie Familiale</h1>
+              <p style={{ opacity: 0.9, fontSize: '16px' }}>{homePharmacy.length} médicaments en stock</p>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              {/* Alertes */}
+              {(expired.length > 0 || expiringSoon.length > 0 || lowStock.length > 0) && (
+                <div style={{ marginBottom: '24px' }}>
+                  {expired.length > 0 && (
+                    <div style={{ background: '#fff5f5', border: '2px solid #fc8181', borderRadius: '12px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <AlertCircle />
+                      <div style={{ color: '#c53030' }}>
+                        <strong>{expired.length} médicament(s) expiré(s)</strong>
+                        <p style={{ fontSize: '14px', margin: '4px 0 0 0' }}>À retirer immédiatement</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {expiringSoon.length > 0 && (
+                    <div style={{ background: '#fffaf0', border: '2px solid #f6ad55', borderRadius: '12px', padding: '16px', marginBottom: '12px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <AlertCircle />
+                      <div style={{ color: '#c05621' }}>
+                        <strong>{expiringSoon.length} médicament(s) expire(nt) bientôt</strong>
+                        <p style={{ fontSize: '14px', margin: '4px 0 0 0' }}>Dans les 3 mois</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {lowStock.length > 0 && (
+                    <div style={{ background: '#ebf8ff', border: '2px solid #90cdf4', borderRadius: '12px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <AlertCircle />
+                      <div style={{ color: '#2c5282' }}>
+                        <strong>{lowStock.length} médicament(s) en stock faible</strong>
+                        <p style={{ fontSize: '14px', margin: '4px 0 0 0' }}>5 unités ou moins</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Grille médicaments */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '16px' }}>
+                {homePharmacy.map(item => {
+                  const hasExpired = isExpired(item.expiryDate);
+                  const willExpire = isExpiringSoon(item.expiryDate);
+                  const isLow = item.quantity <= 5;
+                  
+                  return (
+                    <div key={item.id} style={{
+                      background: 'white',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      opacity: hasExpired ? 0.6 : 1,
+                      border: hasExpired ? '2px solid #fc8181' : 'none'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <div style={{ fontSize: '36px' }}>{item.image}</div>
+                        <button onClick={() => removePharmacyItem(item.id)} style={{
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#fee',
+                          color: '#e53e3e',
+                          cursor: 'pointer',
+                          fontSize: '16px'
+                        }}>×</button>
+                      </div>
+                      
+                      <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#2d3748', marginBottom: '6px' }}>{item.name}</h3>
+                      <div style={{ fontSize: '12px', color: '#718096', marginBottom: '8px' }}>{item.dosages.join(', ')}</div>
+                      <div style={{ fontSize: '11px', background: '#edf2f7', padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '12px' }}>
+                        {item.category}
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button onClick={() => updatePharmacyQuantity(item.id, -1)} disabled={item.quantity === 0} style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            border: '2px solid #48bb78',
+                            background: 'white',
+                            color: '#48bb78',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            opacity: item.quantity === 0 ? 0.3 : 1
+                          }}>-</button>
+                          <span style={{ fontWeight: '700', fontSize: '16px', color: isLow ? '#e53e3e' : '#2d3748', minWidth: '20px', textAlign: 'center' }}>
+                            {item.quantity}
+                          </span>
+                          <button onClick={() => updatePharmacyQuantity(item.id, 1)} style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            border: '2px solid #48bb78',
+                            background: 'white',
+                            color: '#48bb78',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            fontWeight: '700'
+                          }}>+</button>
+                        </div>
+                        
+                        <div style={{ fontSize: '11px', color: hasExpired ? '#e53e3e' : willExpire ? '#d69e2e' : '#718096', fontWeight: hasExpired || willExpire ? '600' : '500' }}>
+                          {hasExpired ? '⚠️ Expiré' : willExpire ? '⚠ ' : ''}
+                          {new Date(item.expiryDate).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <BottomNav />
+            
+            {showNotification && (
+              <div style={{ position: 'fixed', top: '24px', right: '24px', background: '#48bb78', color: 'white', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 1000 }}>
+                {notificationMessage}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // VUE PARENTS
+      if (view === 'parents') {
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '32px 20px', color: 'white' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>👨‍👩 Parents</h1>
+              <p style={{ opacity: 0.9, fontSize: '16px' }}>{parents.length} parent(s) enregistré(s)</p>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              {parents.map(parent => {
+                const meds = medications[parent.id] || [];
+                const weekDates = getWeekDates(currentWeekOffset);
+                const today = new Date().toISOString().split('T')[0];
+                
+                return (
+                  <div key={parent.id} style={{
+                    background: 'white',
+                    borderRadius: '20px',
+                    padding: '20px',
+                    marginBottom: '16px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                    borderLeft: `4px solid ${parent.color}`
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '48px' }}>{parent.avatar}</div>
+                      <div style={{ flex: 1 }}>
+                        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#2d3748', marginBottom: '4px' }}>{parent.name}</h2>
+                        <p style={{ fontSize: '14px', color: '#718096' }}>{meds.length} médicament(s) actif(s)</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedPerson(parent.id);
+                          setView('scan');
+                        }}
+                        style={{
+                          background: parent.color,
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 20px',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <Plus />
+                        Ajouter
+                      </button>
+                    </div>
+
+                    {meds.length > 0 ? (
+                      <>
+                        {/* Semainier compact */}
+                        <div style={{ marginBottom: '16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#2d3748' }}>📅 Cette semaine</h3>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => setCurrentWeekOffset(currentWeekOffset - 1)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: '#f7fafc', cursor: 'pointer' }}>
+                                <ChevronLeft />
+                              </button>
+                              {currentWeekOffset !== 0 && (
+                                <button onClick={() => setCurrentWeekOffset(0)} style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: '#667eea', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
+                                  Aujourd'hui
+                                </button>
+                              )}
+                              <button onClick={() => setCurrentWeekOffset(currentWeekOffset + 1)} style={{ width: '32px', height: '32px', borderRadius: '8px', border: 'none', background: '#f7fafc', cursor: 'pointer' }}>
+                                <ChevronRight />
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+                            {weekDates.map(date => {
+                              const dateStr = date.toISOString().split('T')[0];
+                              const isToday = dateStr === today;
+                              const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+                              const dayNum = date.getDate();
+                              
+                              const dayMeds = meds.filter(med => {
+                                const endDate = new Date(med.endDate);
+                                return date <= endDate;
+                              }).flatMap(med => med.times.map(time => ({
+                                ...med,
+                                time,
+                                key: `${dateStr}-${time}`,
+                                taken: med.taken?.[`${dateStr}-${time}`] || false
+                              })));
+                              
+                              const total = dayMeds.length;
+                              const completed = dayMeds.filter(m => m.taken).length;
+                              
+                              return (
+                                <div key={dateStr} style={{
+                                  background: isToday ? parent.color : '#f7fafc',
+                                  color: isToday ? 'white' : '#2d3748',
+                                  borderRadius: '12px',
+                                  padding: '8px',
+                                  textAlign: 'center',
+                                  fontSize: '12px',
+                                  border: isToday ? '2px solid ' + parent.color : 'none'
+                                }}>
+                                  <div style={{ fontWeight: '600', opacity: 0.8, fontSize: '10px', textTransform: 'uppercase' }}>{dayName}</div>
+                                  <div style={{ fontSize: '18px', fontWeight: '700', margin: '4px 0' }}>{dayNum}</div>
+                                  {total > 0 && (
+                                    <div style={{ fontSize: '10px', opacity: 0.9 }}>{completed}/{total}</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Liste médicaments */}
+                        <div>
+                          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#718096', marginBottom: '12px' }}>Médicaments actifs:</h3>
+                          {meds.map(med => (
+                            <div key={med.id} style={{
+                              background: '#f7fafc',
+                              borderRadius: '12px',
+                              padding: '12px',
+                              marginBottom: '8px',
+                              borderLeft: `3px solid ${parent.color}`
+                            }}>
+                              <div style={{ fontWeight: '600', color: '#2d3748', marginBottom: '4px' }}>{med.name}</div>
+                              <div style={{ fontSize: '13px', color: '#718096', marginBottom: '6px' }}>{med.dosage} • {med.times.length}x/jour</div>
+                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                {med.times.map(time => (
+                                  <span key={time} style={{
+                                    background: parent.color,
+                                    color: 'white',
+                                    padding: '4px 10px',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                  }}>{time}</span>
+                                ))}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#a0aec0', marginTop: '6px' }}>
+                                Fin: {new Date(med.endDate).toLocaleDateString('fr-FR')}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#a0aec0' }}>
+                        <Pill style={{ width: '48px', height: '48px', margin: '0 auto 16px' }} />
+                        <p>Aucun médicament actif</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <BottomNav />
+          </div>
+        );
+      }
+
+      // VUE ENFANTS (similaire aux parents)
+      if (view === 'children') {
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #ffd93d 0%, #ffb347 100%)', padding: '32px 20px', color: 'white' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>👶 Enfants</h1>
+              <p style={{ opacity: 0.9, fontSize: '16px' }}>{children.length} enfant(s) enregistré(s)</p>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              {children.map(child => {
+                const meds = medications[child.id] || [];
+                
+                return (
+                  <div key={child.id} style={{
+                    background: 'white',
+                    borderRadius: '20px',
+                    padding: '20px',
+                    marginBottom: '16px',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                    borderLeft: `4px solid ${child.color}`
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '48px' }}>{child.avatar}</div>
+                      <div style={{ flex: 1 }}>
+                        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#2d3748', marginBottom: '4px' }}>{child.name}</h2>
+                        <p style={{ fontSize: '14px', color: '#718096' }}>{child.age} ans • {meds.length} médicament(s)</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedPerson(child.id);
+                          setView('scan');
+                        }}
+                        style={{
+                          background: child.color,
+                          color: 'white',
+                          border: 'none',
+                          padding: '12px 20px',
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          fontWeight: '600',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
+                      >
+                        <Plus />
+                        Ajouter
+                      </button>
+                    </div>
+
+                    {meds.length > 0 ? (
+                      <div>
+                        {meds.map(med => (
+                          <div key={med.id} style={{
+                            background: '#f7fafc',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            marginBottom: '8px',
+                            borderLeft: `3px solid ${child.color}`
+                          }}>
+                            <div style={{ fontWeight: '600', color: '#2d3748', marginBottom: '4px' }}>{med.name}</div>
+                            <div style={{ fontSize: '13px', color: '#718096', marginBottom: '6px' }}>{med.dosage} • {med.times.length}x/jour</div>
+                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                              {med.times.map(time => (
+                                <span key={time} style={{
+                                  background: child.color,
+                                  color: 'white',
+                                  padding: '4px 10px',
+                                  borderRadius: '8px',
+                                  fontSize: '12px',
+                                  fontWeight: '500'
+                                }}>{time}</span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '40px 20px', color: '#a0aec0' }}>
+                        <Pill style={{ width: '48px', height: '48px', margin: '0 auto 16px' }} />
+                        <p>Aucun médicament actif</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <BottomNav />
+          </div>
+        );
+      }
+
+      // VUE AJOUTER PERSONNE
+      if (view === 'addPerson') {
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '32px 20px', color: 'white' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '8px' }}>➕ Ajouter une personne</h1>
+              <p style={{ opacity: 0.9, fontSize: '16px' }}>Parent ou enfant</p>
+            </div>
+
+            <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+              <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Type</label>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                      onClick={() => setNewPerson({ ...newPerson, type: 'parent' })}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        border: `2px solid ${newPerson.type === 'parent' ? '#667eea' : '#e2e8f0'}`,
+                        background: newPerson.type === 'parent' ? '#eef2ff' : 'white',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: newPerson.type === 'parent' ? '#667eea' : '#718096'
+                      }}
+                    >
+                      👨‍👩 Parent
+                    </button>
+                    <button
+                      onClick={() => setNewPerson({ ...newPerson, type: 'child' })}
+                      style={{
+                        flex: 1,
+                        padding: '16px',
+                        border: `2px solid ${newPerson.type === 'child' ? '#ffd93d' : '#e2e8f0'}`,
+                        background: newPerson.type === 'child' ? '#fffbeb' : 'white',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: newPerson.type === 'child' ? '#d69e2e' : '#718096'
+                      }}
+                    >
+                      👶 Enfant
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Nom</label>
+                  <input
+                    type="text"
+                    value={newPerson.name}
+                    onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })}
+                    placeholder="Ex: Marie, Lucas..."
+                    style={{ width: '100%', padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px', fontFamily: 'inherit' }}
+                  />
+                </div>
+
+                {newPerson.type === 'child' && (
+                  <div style={{ marginBottom: '24px' }}>
+                    <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Âge</label>
+                    <input
+                      type="number"
+                      value={newPerson.age}
+                      onChange={(e) => setNewPerson({ ...newPerson, age: e.target.value })}
+                      placeholder="Ex: 5"
+                      style={{ width: '100%', padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ marginBottom: '24px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Avatar</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                    {(newPerson.type === 'parent' ? ['👨', '👩', '🧑', '👴', '👵'] : ['👦', '👧', '🧒', '👶', '🍼']).map(emoji => (
+                      <button
+                        key={emoji}
+                        onClick={() => setNewPerson({ ...newPerson, avatar: emoji })}
+                        style={{
+                          padding: '16px',
+                          fontSize: '32px',
+                          border: `2px solid ${newPerson.avatar === emoji ? '#667eea' : '#e2e8f0'}`,
+                          background: newPerson.avatar === emoji ? '#eef2ff' : 'white',
+                          borderRadius: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={addPerson}
+                  disabled={!newPerson.name}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: newPerson.name ? '#667eea' : '#cbd5e0',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    cursor: newPerson.name ? 'pointer' : 'not-allowed',
+                    marginTop: '16px'
+                  }}
+                >
+                  ✓ Ajouter la personne
+                </button>
+              </div>
+            </div>
+
+            <BottomNav />
+          </div>
+        );
+      }
+
+      // VUE SCAN (simplifiée pour l'exemple)
+      if (view === 'scan') {
+        const person = [...parents, ...children].find(p => p.id === selectedPerson);
+        
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: `linear-gradient(135deg, ${person.color} 0%, color-mix(in srgb, ${person.color} 80%, black) 100%)`, padding: '20px', color: 'white' }}>
+              <button onClick={() => setView(person.type === 'parent' ? 'parents' : 'children')} style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                marginBottom: '16px'
+              }}>
+                ← Retour
+              </button>
+              <h2 style={{ fontSize: '24px', fontWeight: '700' }}>Scanner une ordonnance</h2>
+              <p style={{ opacity: 0.9, marginTop: '8px' }}>Pour {person.name}</p>
+            </div>
+
+            <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
+              <div style={{ background: 'white', borderRadius: '20px', padding: '48px 24px', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {!scanFile ? (
+                  <>
+                    <input type="file" id="scan-input" accept="image/*" onChange={handleScanUpload} style={{ display: 'none' }} />
+                    <label htmlFor="scan-input" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ fontSize: '64px' }}>📷</div>
+                      <h3 style={{ fontSize: '22px', fontWeight: '700', color: '#2d3748' }}>Prendre une photo</h3>
+                      <p style={{ color: '#718096' }}>de l'ordonnance</p>
+                      <div style={{ background: person.color, color: 'white', padding: '14px 28px', borderRadius: '12px', fontWeight: '600', marginTop: '16px' }}>
+                        📸 Sélectionner
+                      </div>
+                    </label>
+                  </>
+                ) : (
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <img src={scanFile} alt="Ordonnance" style={{ width: '100%', borderRadius: '12px' }} />
+                    {isProcessing && (
+                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(102, 126, 234, 0.95)', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                        <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔍</div>
+                        <h3 style={{ fontSize: '20px', marginBottom: '16px' }}>Analyse en cours...</h3>
+                        <div style={{ width: '80%', height: '8px', background: 'rgba(255,255,255,0.3)', borderRadius: '10px', marginBottom: '12px' }}>
+                          <div style={{ height: '100%', background: 'white', width: `${ocrProgress}%`, borderRadius: '10px', transition: 'width 0.3s' }} />
+                        </div>
+                        <p style={{ fontSize: '14px' }}>{ocrStatus}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ background: '#edf2f7', borderRadius: '12px', padding: '16px', marginTop: '20px', fontSize: '14px', color: '#4a5568' }}>
+                <strong>🤖 IA OCR + BDPM:</strong> {BDPM_DATABASE.length} médicaments français
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // VUE AJOUTER MÉDICAMENT
+      if (view === 'addMed') {
+        const person = [...parents, ...children].find(p => p.id === selectedPerson);
+        
+        return (
+          <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '80px' }}>
+            <div style={{ background: `linear-gradient(135deg, ${person.color} 0%, color-mix(in srgb, ${person.color} 80%, black) 100%)`, padding: '20px', color: 'white' }}>
+              <button onClick={() => setView('scan')} style={{
+                background: 'rgba(255,255,255,0.2)',
+                border: 'none',
+                color: 'white',
+                padding: '8px 16px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                marginBottom: '16px'
+              }}>
+                ← Retour
+              </button>
+              <h2 style={{ fontSize: '24px', fontWeight: '700' }}>
+                {detectedMedications.length > 0 ? '✅ Vérifier les infos' : 'Ajouter un médicament'}
+              </h2>
+              <p style={{ opacity: 0.9, marginTop: '8px' }}>Pour {person.name}</p>
+            </div>
+
+            <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
+              <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
+                {detectedMedications.length > 0 && (
+                  <div style={{ padding: '12px', background: '#f0fff4', border: '2px solid #48bb78', borderRadius: '12px', marginBottom: '20px', color: '#22543d' }}>
+                    <strong>✅ Détecté automatiquement par l'IA</strong>
+                  </div>
+                )}
+                
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Nom</label>
+                  <input
+                    type="text"
+                    value={newMedication.name}
+                    onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
+                    placeholder="Ex: Doliprane"
+                    style={{ width: '100%', padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px', fontFamily: 'inherit' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Dosage</label>
+                  <input
+                    type="text"
+                    value={newMedication.dosage}
+                    onChange={(e) => setNewMedication({ ...newMedication, dosage: e.target.value })}
+                    placeholder="Ex: 1000mg"
+                    style={{ width: '100%', padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px', fontFamily: 'inherit' }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Horaires</label>
+                  {newMedication.times.map((time, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      <input
+                        type="time"
+                        value={time}
+                        onChange={(e) => {
+                          const newTimes = [...newMedication.times];
+                          newTimes[idx] = e.target.value;
+                          setNewMedication({ ...newMedication, times: newTimes });
+                        }}
+                        style={{ flex: 1, padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px' }}
+                      />
+                      {newMedication.times.length > 1 && (
+                        <button
+                          onClick={() => {
+                            const newTimes = newMedication.times.filter((_, i) => i !== idx);
+                            setNewMedication({ ...newMedication, times: newTimes });
+                          }}
+                          style={{ width: '48px', border: '2px solid #fc8181', background: 'white', color: '#fc8181', borderRadius: '12px', cursor: 'pointer', fontSize: '20px' }}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => setNewMedication({ ...newMedication, times: [...newMedication.times, ''] })}
+                    style={{ width: '100%', padding: '12px', background: '#edf2f7', border: '2px dashed #cbd5e0', borderRadius: '12px', cursor: 'pointer', fontWeight: '500', color: '#4a5568' }}
+                  >
+                    + Ajouter un horaire
+                  </button>
+                </div>
+
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>Date de fin</label>
+                  <input
+                    type="date"
+                    value={newMedication.endDate}
+                    onChange={(e) => setNewMedication({ ...newMedication, endDate: e.target.value })}
+                    style={{ width: '100%', padding: '14px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '16px' }}
+                  />
+                </div>
+
+                <button
+                  onClick={addMedication}
+                  disabled={!newMedication.name || !newMedication.dosage}
+                  style={{
+                    width: '100%',
+                    padding: '16px',
+                    background: newMedication.name && newMedication.dosage ? person.color : '#cbd5e0',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    cursor: newMedication.name && newMedication.dosage ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  ✓ Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<MedicationApp />);
+  </script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; }
+  </style>
+</body>
+</html>
