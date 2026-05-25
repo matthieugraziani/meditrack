@@ -1,0 +1,68 @@
+[project]
+name = "meditrack"
+version = "0.1.0"
+description = "Application de gestion de traitements médicaux et pharmacie familiale avec OCR expérimental"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "MediTrack Team" }
+]
+keywords = [
+    "medical",
+    "ocr",
+    "react",
+    "pharmacy",
+    "healthcare",
+    "tensorflow",
+    "keras"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Healthcare",
+]
+
+dependencies = [
+    "tensorflow>=2.15.0",
+    "keras>=3.0.0",
+    "numpy>=1.26.0",
+    "pandas>=2.2.0",
+    "opencv-python>=4.9.0",
+    "pillow>=10.2.0",
+    "scikit-learn>=1.4.0",
+    "jupyter>=1.0.0",
+    "notebook>=7.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/matthieugraziani/meditrack"
+Repository = "https://github.com/matthieugraziani/meditrack"
+Documentation = "https://github.com/matthieugraziani/meditrack#readme"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.jupyter]
+notebook_dir = "ocr"
