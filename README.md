@@ -5,7 +5,6 @@ MediTrack est une application web dédiée à la **gestion des traitements médi
 L’objectif du projet est de permettre à plusieurs utilisateurs de suivre leurs médicaments, leurs prises quotidiennes, leurs stocks et leurs dates de péremption à travers une interface simple et intuitive.
 
 Le projet combine :
-
 * une interface front‑end légère en **React**
 * une base de données locale de médicaments
 * un module OCR expérimental basé sur le machine learning
@@ -24,7 +23,6 @@ Le projet combine :
 
 * Ajout manuel de médicaments
 * Définition :
-
   * dosage
   * fréquence
   * horaires
@@ -38,7 +36,6 @@ Le projet combine :
 * Navigation entre les semaines
 * Progression quotidienne
 * Visualisation des prises :
-
   * passées
   * présentes
   * futures
@@ -46,13 +43,11 @@ Le projet combine :
 ## 📸 OCR d’ordonnance (expérimental)
 
 Le projet inclut un module OCR préparé pour :
-
 * analyser une ordonnance médicale
 * reconnaître automatiquement les médicaments
 * préremplir les traitements
 
 Le dossier `ocr/` contient :
-
 * le notebook d’entraînement
 * le tokenizer
 * les labels
@@ -66,7 +61,6 @@ Le dossier `ocr/` contient :
 * Quantités ajustables
 * Gestion des dates de péremption
 * Alertes :
-
   * stock faible
   * médicaments expirés
   * expiration proche
@@ -117,6 +111,7 @@ MediTrack/
 │   ├── ocr.ipynb
 │   └── tokenizer.pickle
 │
+├── pyproject.toml
 ├── index.html
 └── README.md
 ```
@@ -142,7 +137,6 @@ Contient les fichiers liés à la reconnaissance de texte et au machine learning
 ### `ocr.ipynb`
 
 Notebook Jupyter utilisé pour :
-
 * entraîner le modèle OCR
 * tester les prédictions
 * préparer les données
@@ -166,17 +160,36 @@ Tokenizer utilisé pour le traitement du texte.
 Point d’entrée principal de l’application.
 
 Le projet front‑end est volontairement centralisé dans un seul fichier afin de :
-
 * simplifier le prototypage
 * faciliter la démonstration
 * éviter une phase de build complexe
 
 Le fichier contient :
-
 * l’interface utilisateur
 * les composants React
 * les styles CSS
 * la logique JavaScript
+
+---
+## 📄 pyproject.toml
+
+Le fichier pyproject.toml est le fichier de configuration principal du projet Python.
+
+Il permet de :
+- définir les dépendances du projet
+- gérer les versions Python compatibles
+- configurer les outils de développement
+- centraliser les métadonnées du projet
+- préparer une future industrialisation du projet
+
+Le fichier contient notamment :
+- les dépendances TensorFlow / Keras
+- la configuration du build Python
+- les outils de formatage (black, isort)
+- la configuration des tests
+- les informations générales du projet
+
+Ce fichier est aujourd’hui le standard moderne de configuration pour les projets Python.
 
 ---
 
@@ -197,13 +210,11 @@ cd MediTrack
 ## 3. Lancer l’application
 
 Ouvrir simplement :
-
 ```bash
 index.html
 ```
 
 dans un navigateur moderne :
-
 * Chrome
 * Firefox
 * Edge
@@ -231,7 +242,6 @@ dans un navigateur moderne :
 Ce projet est un prototype pédagogique et démonstratif.
 
 Il ne remplace pas :
-
 * un suivi médical
 * un pharmacien
 * un avis professionnel de santé
@@ -241,7 +251,6 @@ Il ne remplace pas :
 # 👨‍💻 Auteur
 
 Projet réalisé dans le cadre d’un prototype UX/UI et d’expérimentations autour :
-
 * du suivi médical
 * de la gestion de pharmacie familiale
 * de l’intégration OCR
