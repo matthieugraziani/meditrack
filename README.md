@@ -72,7 +72,7 @@ Aucune installation ni build requis.
 2. Ouvrir simplement le fichier :
 
 ```bash
-medication.html
+index.html
 ```
 
 3. Lancer le fichier dans un navigateur moderne (Chrome, Firefox, Edge)
@@ -84,8 +84,7 @@ medication.html
 ## 📁 Structure du projet
 
 ```bash
-medication.html       # Application complète (React + logique)
-style.css             # Mise en page
+index.html       # Application complète (React + logique)
 README.md             # Documentation du projet
 ```
 
