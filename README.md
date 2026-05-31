@@ -103,6 +103,7 @@ Le dossier `ocr/` contient :
 MediTrack/
 │
 ├── data/
+│   ├── bdpm_database  # (submodule)
 │   └── bdpm.db
 │
 ├── ocr/
@@ -122,12 +123,29 @@ MediTrack/
 
 ## 📁 data/
 
-Contient les données liées aux médicaments.
+Ce projet utilise la base de données **BDPM Database** comme source de référence pharmaceutique.
+
+Projet associé :
+
+- https://github.com/matthieugraziani/bdpm-database
+
+Le dépôt BDPM Database fournit les données de référence sur les médicaments français, notamment :
+
+- Médicaments (CIS)
+- Présentations commerciales (CIP)
+- Substances actives
+- Conditions de prescription
+- Relations génériques
 
 ### `bdpm.db`
 
-Base de données SQLite utilisée pour stocker les informations médicales et pharmaceutiques.
+Base de données SQLite utilisée pour stocker et interroger les informations pharmaceutiques exploitées par l'application :
 
+- Identification des médicaments
+- Recherche de substances actives
+- Informations réglementaires
+- Données de remboursement
+- Relations entre médicaments et génériques
 ---
 
 ## 📁 ocr/
