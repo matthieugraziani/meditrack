@@ -37,7 +37,7 @@ Le projet est divisé en deux services indépendants et interconnectés :
 Exposé via **FastAPI**, le backend orchestre un pipeline IA en trois étapes :
 
 - **`reader.py`** — Initialise et exécute EasyOCR (PyTorch) pour l'extraction textuelle haute performance sur documents flous ou manuscrits.
-- **`matcher.py`** — Nettoie le texte extrait et effectue une recherche floue dans la base SQLite locale de la **BDPM** (Base de Données Publique des Médicaments — ANSM).
+- **`matcher.py`** — Nettoie le texte extrait et effectue une recherche floue dans la base SQLite de la **BDPM** (Base de Données Publique des Médicaments — ANSM), générée par le repo dédié [`matthieugraziani/bdpm-database`](https://github.com/matthieugraziani/bdpm-database).
 - **`pipeline.py`** — Orchestre les deux étapes précédentes et retourne un objet JSON structuré `{ molécule, dosage, fréquence }` prêt à l'emploi côté client.
 
 ### Frontend — SPA React (GitHub Pages)
@@ -58,7 +58,7 @@ Client léger sans bundler (Babel in-browser + React CDN) :
 | Frontend | React 18, Babel (in-browser), CSS custom properties |
 | Backend | Python 3.11, FastAPI, Uvicorn |
 | OCR | EasyOCR, PyTorch |
-| Base médicaments | SQLite — BDPM (ANSM) |
+| Base médicaments | SQLite — BDPM (ANSM) — [`matthieugraziani/bdpm-database`](https://github.com/matthieugraziani/bdpm-database) |
 | CI/CD | GitHub Actions → GitHub Pages (frontend), Render (backend) |
 
 ---
@@ -95,6 +95,17 @@ meditrack/
 
 - Python ≥ 3.11
 - Node.js non requis (frontend sans bundler)
+
+### Base de données BDPM
+
+La base SQLite des médicaments est générée par un repo séparé. La récupérer avant de lancer le backend :
+
+```bash
+git clone https://github.com/matthieugraziani/bdpm-database
+cp bdpm-database/bdpm.db backend/
+```
+
+> Voir [`matthieugraziani/bdpm-database`](https://github.com/matthieugraziani/bdpm-database) pour les détails de génération et de mise à jour.
 
 ### Backend
 
