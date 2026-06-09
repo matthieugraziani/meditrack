@@ -1,20 +1,37 @@
 const { useState, useEffect } = React;
 
-// ─── ICONES COMPONENT DE SECOURS (LUCIDE) ──────────────────────────────────
-// Permet de s'assurer qu'un rendu visuel minimal s'affiche si Lucide tarde à s'initialiser
-const Home = () => <i data-lucide="home"></i>;
-const Users = () => <i data-lucide="users"></i>;
-const Baby = () => <i data-lucide="baby"></i>;
-const UserPlus = () => <i data-lucide="user-plus"></i>;
-const Pill = () => <i data-lucide="pill"></i>;
-const Plus = () => <i data-lucide="plus"></i>;
-const Camera = () => <i data-lucide="camera"></i>;
-const X = () => <i data-lucide="x"></i>;
-const Check = () => <i data-lucide="check"></i>;
-const Calendar = () => <i data-lucide="calendar"></i>;
-const AlertCircle = () => <i data-lucide="alert-circle"></i>;
-const ChevronLeft = () => <i data-lucide="chevron-left"></i>;
-const ChevronRight = () => <i data-lucide="chevron-right"></i>;
+// ─── ICONES SVG INLINE (sans Lucide createIcons) ──────────────────────────
+const Home = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`}} />;
+const Users = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`}} />;
+const Baby = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12h.01"/><path d="M15 12h.01"/><path d="M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5"/><path d="M19 6.3a9 9 0 0 1 1.8 3.9 2 2 0 0 1 0 3.6 9 9 0 0 1-17.6 0 2 2 0 0 1 0-3.6A9 9 0 0 1 12 3c2 0 3.5 1.1 3.5 2.5s-.9 2.5-2 3"/></svg>`}} />;
+const UserPlus = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>`}} />;
+const Pill = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`}} />;
+const Plus = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>`}} />;
+const Camera = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`}} />;
+const X = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>`}} />;
+const Check = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`}} />;
+const Calendar = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>`}} />;
+const AlertCircle = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>`}} />;
+const ChevronLeft = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`}} />;
+const ChevronRight = ({style, className}) => <span style={{display:"inline-flex",alignItems:"center",...style}} className={className} dangerouslySetInnerHTML={{__html: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`}} />;
+
+// ─── NAV BAR BARRE INFERIEURE (COMPOSANT EXTERNE) ──────────────────────────
+const BottomNav = ({ view, setView }) => (
+  <div className="bottom-nav">
+    <button onClick={() => setView('pharmacy')} className={`nav-item ${view === 'pharmacy' ? 'active' : ''}`}>
+      <Home />Pharmacie
+    </button>
+    <button onClick={() => setView('parents')} className={`nav-item ${view === 'parents' ? 'active' : ''}`}>
+      <Users />Parents
+    </button>
+    <button onClick={() => setView('children')} className={`nav-item ${view === 'children' ? 'active' : ''}`}>
+      <Baby />Enfants
+    </button>
+    <button onClick={() => setView('addPerson')} className={`nav-item ${view === 'addPerson' ? 'active' : ''}`}>
+      <UserPlus />+ Profil
+    </button>
+  </div>
+);
 
 const MedicationApp = () => {
   // ─── ÉTATS DE L'APPLICATION (STATES) ─────────────────────────────────────
@@ -76,10 +93,7 @@ const MedicationApp = () => {
       .catch(err => console.warn("L'API Render est en veille. Premier appel ralenti (Cold start).", err));
   }, []);
 
-  // Forcer la regénération des icônes Lucide à chaque re-rendu de composants
-  useEffect(() => {
-    if (window.lucide) window.lucide.createIcons();
-  });
+  // Icônes SVG inline : aucun appel createIcons() nécessaire
 
   // ─── FONCTIONS UTILITAIRES / LOGIQUE METIER ──────────────────────────────
   const isExpired = (date) => new Date(date) < new Date();
@@ -228,23 +242,7 @@ const MedicationApp = () => {
     }
   };
 
-  // ─── NAV BAR BARRE INFERIEURE RESPONSIVE ─────────────────────────────────
-  const BottomNav = () => (
-    <div class="bottom-nav">
-      <button onClick={() => setView('pharmacy')} class={`nav-item ${view === 'pharmacy' ? 'active' : ''}`}>
-        <Home />Pharmacie
-      </button>
-      <button onClick={() => setView('parents')} class={`nav-item ${view === 'parents' ? 'active' : ''}`}>
-        <Users />Parents
-      </button>
-      <button onClick={() => setView('children')} class={`nav-item ${view === 'children' ? 'active' : ''}`}>
-        <Baby />Enfants
-      </button>
-      <button onClick={() => setView('addPerson')} class={`nav-item ${view === 'addPerson' ? 'active' : ''}`}>
-        <UserPlus />+ Profil
-      </button>
-    </div>
-  );
+  // BottomNav est défini en dehors de MedicationApp (ci-dessus)
 
   // ─── RENDUS DES COMPOSANTS DE VUES (VIEWS) ───────────────────────────────
 
@@ -255,8 +253,8 @@ const MedicationApp = () => {
     const lowStock = homePharmacy.filter(item => item.quantity <= 5);
     
     return (
-      <div class="app-container">
-        <div class="app-header pharmacy app-header-flex">
+      <div className="app-container">
+        <div className="app-header pharmacy app-header-flex">
           <div>
             <h1>🏠 Pharmacie Familiale</h1>
             <p style={{ opacity: 0.9 }}>{homePharmacy.length} références en stock</p>
@@ -266,7 +264,7 @@ const MedicationApp = () => {
           </button>
         </div>
 
-        <div class="main-content">
+        <div className="main-content">
           {/* Panneaux d'alertes sanitaires conditionnels */}
           {(expired.length > 0 || expiringSoon.length > 0 || lowStock.length > 0) && (
             <div style={{ marginBottom: '24px' }}>
@@ -292,14 +290,14 @@ const MedicationApp = () => {
           )}
 
           {/* Grille responsive de cartes */}
-          <div class="pharmacy-grid">
+          <div className="pharmacy-grid">
             {homePharmacy.map(item => {
               const hasExpired = isExpired(item.expiryDate);
               const willExpire = isExpiringSoon(item.expiryDate);
               const isLow = item.quantity <= 5;
               
               return (
-                <div key={item.id} class="card" style={{ opacity: hasExpired ? 0.55 : 1, border: hasExpired ? '2px solid #fc8181' : 'none' }}>
+                <div key={item.id} className="card" style={{ opacity: hasExpired ? 0.55 : 1, border: hasExpired ? '2px solid #fc8181' : 'none' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', padding: '20px' }}>
                     <div style={{ fontSize: '36px' }}>{item.image}</div>
                     <button onClick={() => removePharmacyItem(item.id)} style={{ width: '28px', height: '28px', borderRadius: '8px', border: 'none', background: '#fee', color: '#e53e3e', cursor: 'pointer', fontWeight: 'bold' }}>×</button>
@@ -323,7 +321,7 @@ const MedicationApp = () => {
             })}
           </div>
         </div>
-        <BottomNav />
+        <BottomNav view={view} setView={setView} />
         {showNotification && <div style={{ position: 'fixed', top: '24px', right: '24px', background: '#48bb78', color: 'white', padding: '16px 24px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 1000, fontWeight: '600' }}>{notificationMessage}</div>}
       </div>
     );
@@ -332,33 +330,33 @@ const MedicationApp = () => {
   // 2. COMPOSANT : FORMULAIRE ENTRÉE MANUELLE PHARMACIE STOCK
   if (view === 'addPharmacyMed') {
     return (
-      <div class="app-container">
-        <div class="app-header pharmacy">
+      <div className="app-container">
+        <div className="app-header pharmacy">
           <button onClick={() => setView('pharmacy')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '12px', cursor: 'pointer', marginBottom: '16px', fontWeight: '600' }}>← Annuler</button>
           <h2>Ajouter un produit à l'armoire</h2>
         </div>
 
-        <div class="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div class="card">
-            <div class="form-group">
+        <div className="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="card">
+            <div className="form-group">
               <label>Nom de la référence *</label>
-              <input type="text" class="form-control" value={newPharmacyItem.name} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, name: e.target.value })} placeholder="Ex: Doliprane, Maalox, Gaviscon..." />
+              <input type="text" className="form-control" value={newPharmacyItem.name} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, name: e.target.value })} placeholder="Ex: Doliprane, Maalox, Gaviscon..." />
             </div>
 
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <div class="form-group" style={{ flex: '2 1 200px' }}>
+              <div className="form-group" style={{ flex: '2 1 200px' }}>
                 <label>Grammage / Format</label>
-                <input type="text" class="form-control" value={newPharmacyItem.dosage} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, dosage: e.target.value })} placeholder="Ex: 500mg, Tube 100ml..." />
+                <input type="text" className="form-control" value={newPharmacyItem.dosage} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, dosage: e.target.value })} placeholder="Ex: 500mg, Tube 100ml..." />
               </div>
-              <div class="form-group" style={{ flex: '1 1 100px' }}>
+              <div className="form-group" style={{ flex: '1 1 100px' }}>
                 <label>Quantité</label>
-                <input type="number" min="1" class="form-control" value={newPharmacyItem.quantity} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, quantity: e.target.value })} />
+                <input type="number" min="1" className="form-control" value={newPharmacyItem.quantity} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, quantity: e.target.value })} />
               </div>
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Famille thérapeutique</label>
-              <select class="form-control" value={newPharmacyItem.category} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, category: e.target.value })}>
+              <select className="form-control" value={newPharmacyItem.category} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, category: e.target.value })}>
                 <option value="Antalgique">Antalgique (Douleur / Fièvre)</option>
                 <option value="Anti-inflammatoire">Anti-inflammatoire</option>
                 <option value="Antispasmodique">Antispasmodique</option>
@@ -370,13 +368,13 @@ const MedicationApp = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
-              <div class="form-group" style={{ flex: '2 1 200px' }}>
+              <div className="form-group" style={{ flex: '2 1 200px' }}>
                 <label>Date limite de péremption *</label>
-                <input type="date" class="form-control" value={newPharmacyItem.expiryDate} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, expiryDate: e.target.value })} />
+                <input type="date" className="form-control" value={newPharmacyItem.expiryDate} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, expiryDate: e.target.value })} />
               </div>
-              <div class="form-group" style={{ flex: '1 1 100px' }}>
+              <div className="form-group" style={{ flex: '1 1 100px' }}>
                 <label>Forme</label>
-                <select class="form-control" value={newPharmacyItem.image} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, image: e.target.value })} style={{ fontSize: '18px' }}>
+                <select className="form-control" value={newPharmacyItem.image} onChange={(e) => setNewPharmacyItem({ ...newPharmacyItem, image: e.target.value })} style={{ fontSize: '18px' }}>
                   <option value="💊">💊 Comprimé</option>
                   <option value="📦">📦 Boîte</option>
                   <option value="🧴">🧴 Crème</option>
@@ -391,7 +389,7 @@ const MedicationApp = () => {
             </button>
           </div>
         </div>
-        <BottomNav />
+        <BottomNav view={view} setView={setView} />
       </div>
     );
   }
@@ -399,22 +397,22 @@ const MedicationApp = () => {
   // 3. COMPOSANT : DESCRIPTIF DES PROFILS PARENTS
   if (view === 'parents') {
     return (
-      <div class="app-container">
-        <div class="app-header parents">
+      <div className="app-container">
+        <div className="app-header parents">
           <h1>👨‍👩 Parents</h1>
           <p style={{ opacity: 0.9 }}>Suivi de traitement et observance adulte</p>
         </div>
 
-        <div class="main-content">
-          <div class="people-layout">
+        <div className="main-content">
+          <div className="people-layout">
             {parents.map(parent => {
               const meds = medications[parent.id] || [];
               const weekDates = getWeekDates(currentWeekOffset);
               const today = new Date().toISOString().split('T')[0];
               
               return (
-                <div key={parent.id} class="card" style={{ borderLeft: `5px solid ${parent.color}` }}>
-                  <div class="profile-card-header">
+                <div key={parent.id} className="card" style={{ borderLeft: `5px solid ${parent.color}` }}>
+                  <div className="profile-card-header">
                     <div style={{ fontSize: '48px' }}>{parent.avatar}</div>
                     <div>
                       <h2 style={{ fontSize: '22px', fontWeight: '700' }}>{parent.name}</h2>
@@ -472,7 +470,7 @@ const MedicationApp = () => {
             })}
           </div>
         </div>
-        <BottomNav />
+        <BottomNav view={view} setView={setView} />
       </div>
     );
   }
@@ -480,19 +478,19 @@ const MedicationApp = () => {
   // 4. COMPOSANT : DESCRIPTIF DES PROFILS ENFANTS (DOSAGES PEEDIATRIQUES)
   if (view === 'children') {
     return (
-      <div class="app-container">
-        <div class="app-header children">
+      <div className="app-container">
+        <div className="app-header children">
           <h1>👶 Enfants</h1>
           <p style={{ opacity: 0.9 }}>Vérifications et prescriptions pédiatriques</p>
         </div>
 
-        <div class="main-content">
-          <div class="people-layout">
+        <div className="main-content">
+          <div className="people-layout">
             {children.map(child => {
               const meds = medications[child.id] || [];
               return (
-                <div key={child.id} class="card" style={{ borderLeft: `5px solid ${child.color}` }}>
-                  <div class="profile-card-header">
+                <div key={child.id} className="card" style={{ borderLeft: `5px solid ${child.color}` }}>
+                  <div className="profile-card-header">
                     <div style={{ fontSize: '48px' }}>{child.avatar}</div>
                     <div>
                       <h2 style={{ fontSize: '22px', fontWeight: '700' }}>{child.name}</h2>
@@ -523,7 +521,7 @@ const MedicationApp = () => {
             })}
           </div>
         </div>
-        <BottomNav />
+        <BottomNav view={view} setView={setView} />
       </div>
     );
   }
@@ -531,14 +529,14 @@ const MedicationApp = () => {
   // 5. COMPOSANT : AJOUTER UN PROFIL MEMBRE DE LA FAMILLE
   if (view === 'addPerson') {
     return (
-      <div class="app-container">
-        <div class="app-header" style={{ background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)' }}>
+      <div className="app-container">
+        <div className="app-header" style={{ background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)' }}>
           <h1>➕ Profil Familial</h1>
         </div>
 
-        <div class="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div class="card">
-            <div class="form-group">
+        <div className="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="card">
+            <div className="form-group">
               <label>Rôle au sein du foyer</label>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button onClick={() => setNewPerson({ ...newPerson, type: 'parent', avatar: '👨' })} style={{ flex: 1, padding: '14px', border: `2px solid ${newPerson.type === 'parent' ? '#667eea' : '#e2e8f0'}`, background: newPerson.type === 'parent' ? '#eef2ff' : 'white', borderRadius: '12px', cursor: 'pointer', fontWeight: '700' }}>👨‍👩 Adulte / Parent</button>
@@ -546,19 +544,19 @@ const MedicationApp = () => {
               </div>
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Nom complet (Prénom Nom) *</label>
-              <input type="text" class="form-control" value={newPerson.name} onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })} placeholder="Ex: Jean Graziani" />
+              <input type="text" className="form-control" value={newPerson.name} onChange={(e) => setNewPerson({ ...newPerson, name: e.target.value })} placeholder="Ex: Jean Graziani" />
             </div>
 
             {newPerson.type === 'child' && (
-              <div class="form-group">
+              <div className="form-group">
                 <label>Âge de l'enfant (Requis pour contrôle pédiatrique)</label>
-                <input type="number" class="form-control" value={newPerson.age} onChange={(e) => setNewPerson({ ...newPerson, age: e.target.value })} placeholder="Ex: 8" />
+                <input type="number" className="form-control" value={newPerson.age} onChange={(e) => setNewPerson({ ...newPerson, age: e.target.value })} placeholder="Ex: 8" />
               </div>
             )}
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Sélectionner un émoji d'identité</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
                 {(newPerson.type === 'parent' ? ['👨', '👩', '🧑', '👴', '👵'] : ['👦', '👧', '🧒', '👶', '🍼']).map(emoji => (
@@ -572,7 +570,7 @@ const MedicationApp = () => {
             </button>
           </div>
         </div>
-        <BottomNav />
+        <BottomNav view={view} setView={setView} />
       </div>
     );
   }
@@ -592,8 +590,8 @@ const MedicationApp = () => {
           <p style={{ opacity: 0.9 }}>Dossier médical ciblé : {person.name}</p>
         </div>
 
-        <div class="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div class="card" style={{ padding: '40px 20px', textAlign: 'center', minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="card" style={{ padding: '40px 20px', textAlign: 'center', minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {!scanFile ? (
               <div>
                 <input type="file" id="ocr-file-upload" accept="image/*" onChange={handleScanUpload} style={{ display: 'none' }} />
@@ -629,44 +627,44 @@ const MedicationApp = () => {
   if (view === 'addMed') {
     const person = [...parents, ...children].find(p => p.id === selectedPerson);
     return (
-      <div class="app-container">
-        <div class="app-header" style={{ background: `linear-gradient(135deg, ${person.color} 0%, #2d3748 100%)` }}>
+      <div className="app-container">
+        <div className="app-header" style={{ background: `linear-gradient(135deg, ${person.color} 0%, #2d3748 100%)` }}>
           <button onClick={() => setView('scan')} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: 'white', padding: '8px 16px', borderRadius: '10px', cursor: 'pointer', marginBottom: '12px' }}>← Réanalyser</button>
           <h2>Posologie Extrait du Document</h2>
         </div>
 
-        <div class="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div class="card">
+        <div className="main-content" style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="card">
             {detectedMedications.length > 0 && (
               <div style={{ padding: '12px', background: '#f0fff4', border: '2px solid #48bb78', borderRadius: '12px', marginBottom: '20px', color: '#22543d', fontSize: '13px', fontWeight: '600' }}>
                 ✓ EasyOCR & ANSM : La désignation de la molécule est validée scientifiquement.
               </div>
             )}
             
-            <div class="form-group">
+            <div className="form-group">
               <label>Molécule certifiée</label>
-              <input type="text" class="form-control" value={newMedication.name} onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })} />
+              <input type="text" className="form-control" value={newMedication.name} onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })} />
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Dosage unitaire prescrit</label>
-              <input type="text" class="form-control" value={newMedication.dosage} onChange={(e) => setNewMedication({ ...newMedication, dosage: e.target.value })} placeholder="Ex: 1 comprimé, 1 mesure-chette..." />
+              <input type="text" className="form-control" value={newMedication.dosage} onChange={(e) => setNewMedication({ ...newMedication, dosage: e.target.value })} placeholder="Ex: 1 comprimé, 1 mesure-chette..." />
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Heures de notifications (Rappels quotidiens)</label>
               {newMedication.times.map((time, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <input type="time" class="form-control" value={time} onChange={(e) => { const newTimes = [...newMedication.times]; newTimes[idx] = e.target.value; setNewMedication({ ...newMedication, times: newTimes }); }} />
+                  <input type="time" className="form-control" value={time} onChange={(e) => { const newTimes = [...newMedication.times]; newTimes[idx] = e.target.value; setNewMedication({ ...newMedication, times: newTimes }); }} />
                   {newMedication.times.length > 1 && <button onClick={() => { const newTimes = newMedication.times.filter((_, i) => i !== idx); setNewMedication({ ...newMedication, times: newTimes }); }} style={{ width: '48px', border: '2px solid #fc8181', background: 'white', color: '#fc8181', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>×</button>}
                 </div>
               ))}
               <button onClick={() => setNewMedication({ ...newMedication, times: [...newMedication.times, ''] })} style={{ width: '100%', padding: '10px', background: '#edf2f7', border: '2px dashed #cbd5e0', borderRadius: '12px', cursor: 'pointer', fontWeight: '600', fontSize: '13px' }}>+ Ajouter une prise journalière</button>
             </div>
 
-            <div class="form-group">
+            <div className="form-group">
               <label>Fin estimée de la prescription médicale</label>
-              <input type="date" class="form-control" value={newMedication.endDate} onChange={(e) => setNewMedication({ ...newMedication, endDate: e.target.value })} />
+              <input type="date" className="form-control" value={newMedication.endDate} onChange={(e) => setNewMedication({ ...newMedication, endDate: e.target.value })} />
             </div>
 
             <button onClick={addMedication} disabled={!newMedication.name || !newMedication.dosage} style={{ width: '100%', padding: '16px', background: newMedication.name && newMedication.dosage ? person.color : '#cbd5e0', color: person.type === 'child' ? '#2d3748' : 'white', border: 'none', borderRadius: '12px', fontSize: '18px', fontWeight: '700', cursor: 'pointer' }}>
