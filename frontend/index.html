@@ -18,6 +18,111 @@
   
   <div id="root"></div>
 
+  <!-- ── BANDEAU RGPD ─────────────────────────────────────────────────────── -->
+  <div id="gdpr-banner" style="
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+    background: #1a202c; color: #e2e8f0;
+    padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px; line-height: 1.5;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+  ">
+    <div style="flex: 1; min-width: 260px;">
+      🔒 <strong>Confidentialité &amp; IA</strong> — MediTrack ne stocke aucune donnée personnelle.
+      Les images d'ordonnances sont transmises à notre serveur uniquement pour analyse OCR et supprimées immédiatement.
+      Les résultats restent en mémoire locale et disparaissent à la fermeture de l'onglet.
+      <button onclick="document.getElementById('privacy-modal').style.display='flex'" style="
+        background: none; border: none; color: #90cdf4; cursor: pointer;
+        font-size: 13px; text-decoration: underline; padding: 0; margin-left: 4px;
+      ">En savoir plus</button>
+    </div>
+    <button onclick="acceptGdpr()" style="
+      background: #48bb78; color: white; border: none;
+      padding: 10px 20px; border-radius: 8px; cursor: pointer;
+      font-weight: 700; font-size: 13px; white-space: nowrap;
+    ">J'accepte</button>
+  </div>
+
+  <!-- ── MODAL POLITIQUE DE CONFIDENTIALITÉ ───────────────────────────────── -->
+  <div id="privacy-modal" style="
+    display: none;
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.6);
+    align-items: center; justify-content: center;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  ">
+    <div style="
+      background: white; border-radius: 16px;
+      padding: 32px; max-width: 560px; width: 100%;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.3);
+    ">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="margin:0; font-size:18px; color:#1a202c;">🔒 Politique de confidentialité</h2>
+        <button onclick="document.getElementById('privacy-modal').style.display='none'" style="
+          background:#f7fafc; border:none; width:32px; height:32px;
+          border-radius:8px; cursor:pointer; font-size:18px; color:#718096;
+        ">×</button>
+      </div>
+
+      <p style="font-size:13px; color:#4a5568; margin-bottom:16px;">
+        MediTrack est une application personnelle de gestion de pharmacie familiale.
+        Elle n'est <strong>pas un dispositif médical certifié</strong>. Les informations affichées
+        ne remplacent pas l'avis d'un professionnel de santé.
+      </p>
+
+      <h3 style="font-size:14px; color:#2d3748; margin:16px 0 8px;">📦 Données stockées</h3>
+      <p style="font-size:13px; color:#4a5568;">
+        Aucune donnée n'est enregistrée sur un serveur. Tous les profils, médicaments
+        et traitements sont conservés <strong>uniquement en mémoire locale</strong> (RAM)
+        et sont perdus à la fermeture de l'onglet. Aucun cookie, aucune base de données.
+      </p>
+
+      <h3 style="font-size:14px; color:#2d3748; margin:16px 0 8px;">📷 Images d'ordonnances (OCR)</h3>
+      <p style="font-size:13px; color:#4a5568;">
+        Lorsque vous numérisez une ordonnance, l'image est transmise chiffrée (HTTPS)
+        à notre API hébergée sur <strong>Render</strong> (infrastructure AWS, conforme RGPD).
+        L'image est <strong>supprimée immédiatement</strong> après analyse et n'est ni conservée,
+        ni indexée, ni utilisée à des fins d'entraînement.
+      </p>
+
+      <h3 style="font-size:14px; color:#2d3748; margin:16px 0 8px;">🤖 Intelligence artificielle (AI Act)</h3>
+      <p style="font-size:13px; color:#4a5568;">
+        Le pipeline OCR (EasyOCR) est classé <strong>risque limité</strong> au sens de l'AI Act européen :
+        il assiste la saisie mais ne prend aucune décision médicale autonome.
+        Chaque résultat doit être <strong>vérifié et validé manuellement</strong> par l'utilisateur
+        avant tout usage. MediTrack décline toute responsabilité en cas d'erreur de reconnaissance.
+      </p>
+
+      <h3 style="font-size:14px; color:#2d3748; margin:16px 0 8px;">📬 Contact</h3>
+      <p style="font-size:13px; color:#4a5568;">
+        Pour toute question : <a href="https://github.com/matthieugraziani/meditrack/issues" style="color:#667eea;">github.com/matthieugraziani/meditrack</a>
+      </p>
+
+      <button onclick="acceptGdpr()" style="
+        width:100%; margin-top:20px; padding:14px;
+        background:#667eea; color:white; border:none;
+        border-radius:10px; font-size:15px; font-weight:700; cursor:pointer;
+      ">Compris</button>
+    </div>
+  </div>
+
+  <script>
+    if (!localStorage.getItem('meditrack_gdpr_accepted')) {
+      document.getElementById('gdpr-banner').style.display = 'flex';
+    } else {
+      document.getElementById('gdpr-banner').style.display = 'none';
+    }
+    function acceptGdpr() {
+      localStorage.setItem('meditrack_gdpr_accepted', '1');
+      document.getElementById('gdpr-banner').style.display = 'none';
+      document.getElementById('privacy-modal').style.display = 'none';
+    }
+  </script>
+
   <script src="src/api-config.js"></script>
 
   <script type="text/babel" src="src/app.js"></script>

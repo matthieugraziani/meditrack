@@ -1,6 +1,6 @@
 # 💊 MediTrack
 
-**Gestion de pharmacie familiale & suivi thérapeutique avec pipeline OCR**
+**Family pharmacy management & treatment tracking with OCR pipeline**
 
 MediTrack est une application web full-stack permettant de gérer le stock de médicaments du foyer, de suivre l'observance des traitements par profil (parents / enfants) et d'automatiser la saisie des ordonnances via un pipeline de reconnaissance optique (OCR) sur mesure basé sur EasyOCR.
 
@@ -14,6 +14,8 @@ MediTrack est une application web full-stack permettant de gérer le stock de m�
 - [Structure du dépôt](#-structure-du-dépôt)
 - [Installation & lancement](#-installation--lancement)
 - [Déploiement](#-déploiement)
+- [Conformité RGPD & AI Act](#️-conformité-rgpd--ai-act)
+- [Confidentialité & Conformité](#️-confidentialité--conformité)
 
 ---
 
@@ -141,6 +143,48 @@ Puis pointer `api-config.js` sur `http://localhost:8000`.
 | **Render** | `backend/` | Push sur `main` (free tier — cold start ~30 s) |
 
 > **Note cold start Render :** le plan gratuit met l'instance en veille après inactivité. Le premier appel OCR post-inactivité peut prendre 20 à 30 secondes — comportement normal, géré côté client par un message d'état.
+
+---
+
+## ⚖️ Confidentialité & Conformité
+
+### RGPD
+
+MediTrack ne collecte, ne stocke et ne transmet aucune donnée personnelle à des tiers. Toutes les informations saisies (profils, médicaments, traitements) sont conservées uniquement en mémoire locale dans le navigateur et disparaissent à la fermeture de l'onglet.
+
+Lorsqu'un utilisateur utilise la fonctionnalité de scan d'ordonnance, l'image est transmise en HTTPS au serveur d'analyse, traitée en temps réel par EasyOCR, puis **supprimée immédiatement** — aucune image n'est conservée côté serveur.
+
+### AI Act (Règlement européen sur l'IA)
+
+Le pipeline OCR de MediTrack traite des images d'ordonnances médicales via un modèle de Deep Learning. Conformément au Règlement européen sur l'IA :
+
+- Ce système est classé **risque limité** : il s'agit d'un outil d'assistance personnelle, non d'un système décisionnel médical autonome.
+- Les résultats de l'IA sont **toujours soumis à la validation manuelle** de l'utilisateur avant tout enregistrement.
+- MediTrack **n'est pas un dispositif médical certifié** et ne remplace pas l'avis d'un professionnel de santé.
+
+Un bandeau d'information RGPD/IA est affiché au premier lancement de l'application et doit être explicitement accepté par l'utilisateur.
+
+---
+
+## ⚖️ Conformité RGPD & AI Act
+
+### Données personnelles (RGPD)
+
+| Donnée | Traitement |
+|---|---|
+| Profils familiaux, médicaments, traitements | Stockés **uniquement en mémoire locale** (RAM) — aucune persistance, aucun serveur |
+| Images d'ordonnances | Transmises en HTTPS à l'API Render pour analyse OCR, **supprimées immédiatement** après traitement |
+| Cookies / tracking | **Aucun** |
+
+L'infrastructure backend est hébergée sur Render (AWS us-east-1, conforme RGPD). Un bandeau de consentement est affiché au premier lancement de l'application.
+
+### Intelligence artificielle (AI Act)
+
+MediTrack utilise un pipeline EasyOCR pour assister la saisie d'ordonnances. Ce système est classé **risque limité** au sens du règlement européen AI Act :
+
+- Il n'effectue **aucune décision médicale autonome**.
+- Chaque résultat OCR doit être **vérifié et validé manuellement** par l'utilisateur avant tout enregistrement.
+- L'application n'est **pas un dispositif médical certifié** et ne remplace pas l'avis d'un professionnel de santé.
 
 ---
 
