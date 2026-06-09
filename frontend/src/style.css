@@ -1,0 +1,221 @@
+/* ==========================================================================
+   1. VARIABLES & CONFIGURATION GENERALE
+   ========================================================================== */
+:root {
+  --primary-color: #48bb78;
+  --primary-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  --parent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --child-gradient: linear-gradient(135deg, #ffd93d 0%, #ffb347 100%);
+  --bg-color: #f8f9fa;
+  --text-color: #2d3748;
+  --text-light: #718096;
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --nav-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --max-width: 1200px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Conteneur principal pour centrer l'application sur grand écran */
+.app-container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-bottom: 90px; /* Évite que la nav barre du bas ne cache du contenu */
+}
+
+/* ==========================================================================
+   2. HEADERS (Bannières du haut)
+   ========================================================================== */
+.app-header {
+  padding: 32px 24px;
+  color: white;
+  text-align: center;
+}
+
+.app-header.pharmacy { background: var(--primary-gradient); }
+.app-header.parents { background: var(--parent-gradient); }
+.app-header.children { background: var(--child-gradient); }
+
+.app-header h1 {
+  font-size: 2rem; /* S'adapte à la taille de police du navigateur */
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   3. GRILLES RESPONSIVES (Le cœur du changement)
+   ========================================================================== */
+.main-content {
+  padding: 24px;
+}
+
+/* Grille de la pharmacie : s'adapte tout seul de 1 colonne (mobile) à 4+ (PC) */
+.pharmacy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+/* Layout pour les profils Parents / Enfants */
+.people-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ==========================================================================
+   4. COMPOSANTS (Cartes, Boutons, Formulaires)
+   ========================================================================== */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+/* Entête d'une carte profil (Avatar + Nom + Bouton) */
+.profile-card-header {
+  display: flex;
+  flex-direction: column; /* Par défaut vertical sur petit écran */
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Formulaires responsives */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  background: white;
+}
+
+/* ==========================================================================
+   5. BARRE DE NAVIGATION INFERIEURE / LATERALE
+   ========================================================================== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  box-shadow: var(--nav-shadow);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+  z-index: 100;
+}
+
+.nav-item {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.nav-item.active {
+  color: var(--primary-color);
+}
+
+
+/* ==========================================================================
+   6. MEDIA QUERIES (Ajustements pour Tablettes et Écrans PC)
+   ========================================================================== */
+
+/* À partir des tablettes (768px et plus) */
+@media (min-width: 768px) {
+  .app-header {
+    text-align: left;
+    padding: 48px 40px;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg); /* Joli arrondi aux angles */
+  }
+  
+  .app-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .profile-card-header {
+    flex-direction: row; /* Aligne l'avatar, le nom et le bouton horizontalement */
+    text-align: left;
+  }
+
+  .profile-card-header button {
+    margin-left: auto; /* Pousse le bouton "Scanner" tout à droite */
+  }
+
+  /* Les listes de profils se mettent côte à côte sur grand écran */
+  .people-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* À partir des écrans d'ordinateurs (1024px et plus) */
+@media (min-width: 1024px) {
+  .main-content {
+    padding: 40px;
+  }
+  
+  /* Optionnel : Si vous préférez une barre de navigation latérale style "Dashboard" sur PC, 
+     vous pouvez modifier la classe .bottom-nav ici. Pour l'instant, elle reste centrée et élégante. */
+}
+
+/* S'assure que si le titre et le bouton manquent de place sur mobile, ils s'empilent proprement */
+.app-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .app-header-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  .app-header-flex button {
+    width: 100%; /* Bouton large et facile à cliquer sur smartphone */
+  }
+}
