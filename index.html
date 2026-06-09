@@ -19,41 +19,97 @@
     const { useState, useEffect } = React;
 
     // Base de données BDPM
-    const BDPM_DATABASE = [
-      { nom: "DOLIPRANE", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
-      { nom: "DAFALGAN", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
-      { nom: "EFFERALGAN", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
-      { nom: "PARACETAMOL", dci: "PARACETAMOL", dosages: ["500mg", "1000mg"], forme: "comprimé" },
-      { nom: "IBUPROFENE", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
-      { nom: "ADVIL", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
-      { nom: "NUROFEN", dci: "IBUPROFENE", dosages: ["200mg", "400mg"], forme: "comprimé" },
-      { nom: "VOLTARENE", dci: "DICLOFENAC", dosages: ["50mg", "75mg"], forme: "comprimé" },
-      { nom: "AMOXICILLINE", dci: "AMOXICILLINE", dosages: ["500mg", "1g"], forme: "comprimé" },
-      { nom: "AUGMENTIN", dci: "AMOXICILLINE ACIDE CLAVULANIQUE", dosages: ["500mg/62.5mg", "1g/125mg"], forme: "comprimé" },
-      { nom: "CLAMOXYL", dci: "AMOXICILLINE", dosages: ["500mg", "1g"], forme: "gélule" },
-      { nom: "AZITHROMYCINE", dci: "AZITHROMYCINE", dosages: ["250mg", "500mg"], forme: "comprimé" },
-      { nom: "SPASFON", dci: "PHLOROGLUCINOL", dosages: ["80mg"], forme: "comprimé" },
-      { nom: "SMECTA", dci: "DIOSMECTITE", dosages: ["3g"], forme: "sachet" },
-      { nom: "ULTRA-LEVURE", dci: "SACCHAROMYCES BOULARDII", dosages: ["200mg"], forme: "gélule" },
-      { nom: "IMODIUM", dci: "LOPERAMIDE", dosages: ["2mg"], forme: "gélule" },
-      { nom: "INEXIUM", dci: "ESOMEPRAZOLE", dosages: ["20mg", "40mg"], forme: "comprimé" },
-      { nom: "MOPRAL", dci: "OMEPRAZOLE", dosages: ["20mg"], forme: "gélule" },
-      { nom: "KARDEGIC", dci: "ASPIRINE", dosages: ["75mg", "160mg"], forme: "sachet" },
-      { nom: "ASPEGIC", dci: "ASPIRINE", dosages: ["100mg", "500mg", "1000mg"], forme: "sachet" },
-      { nom: "LEVOTHYROX", dci: "LEVOTHYROXINE", dosages: ["25µg", "50µg", "75µg", "100µg", "125µg"], forme: "comprimé" },
-      { nom: "METFORMINE", dci: "METFORMINE", dosages: ["500mg", "850mg", "1000mg"], forme: "comprimé" },
-      { nom: "XANAX", dci: "ALPRAZOLAM", dosages: ["0.25mg", "0.5mg"], forme: "comprimé" },
-      { nom: "LEXOMIL", dci: "BROMAZEPAM", dosages: ["6mg"], forme: "comprimé" },
-      { nom: "VENTOLINE", dci: "SALBUTAMOL", dosages: ["100µg"], forme: "spray" },
-      { nom: "SERETIDE", dci: "SALMETEROL FLUTICASONE", dosages: ["50/250µg"], forme: "diskus" },
-      { nom: "BIAFINE", dci: "TROLAMINE", dosages: ["tube 100ml"], forme: "émulsion" },
-      { nom: "SERUM PHYSIOLOGIQUE", dci: "CHLORURE DE SODIUM", dosages: ["5ml", "10ml"], forme: "unidose" }
-    ];
+    const [BDPM_DATABASE, setBDPM_DATABASE] = useState([]);
 
-    // Fonctions OCR
-    const normalizeText = (text) => {
-      return text.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    useEffect(() => {
+      fetch("./bdpm-database/data/.bdpm_meta.json")
+        .then(r => r.json())
+        .then(setBDPM_DATABASE);
+    }, []);
+
+    // ─── OCR helpers — alignés sur meditrack/ocr/matcher.py ──────────────────
+
+    /**
+     * Normalise un texte brut (équivalent Python : ocr_text.lower().strip()
+     * + suppression des accents).
+     * Retourne la chaîne en majuscules sans accents ni caractères spéciaux.
+     */
+    const normalizeText = (text) =>
+      text
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    /**
+     * Calcule un score de similarité entre deux chaînes (ratio 0–1).
+     * Implémentation JS de difflib.SequenceMatcher.ratio().
+     * Utilisé par findBestMedicine pour le champ "confiance".
+     */
+    const sequenceMatcherRatio = (a, b) => {
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+      const longer = a.length > b.length ? a : b;
+      const shorter = a.length > b.length ? b : a;
+      if (longer.length === 0) return 1;
+      let matches = 0;
+      const usedIndices = new Set();
+      for (let i = 0; i < shorter.length; i++) {
+        for (let j = 0; j < longer.length; j++) {
+          if (!usedIndices.has(j) && shorter[i] === longer[j]) {
+            matches++;
+            usedIndices.add(j);
+            break;
+          }
+        }
+      }
+      return (2 * matches) / (a.length + b.length);
     };
+
+    /**
+     * Correspondance floue — port JS de MedicamentMatcher.find().
+     *   1. Normalise la requête (comme Python : .lower().strip())
+     *   2. Cherche d'abord une inclusion exacte du nom dans le texte
+     *   3. Sinon calcule le score de similarité pour chaque entrée
+     *   4. Retourne { nom, dci, dosages, forme, confiance } ou null
+     *
+     * @param {string} ocrText  — texte brut issu de l'OCR
+     * @param {number} threshold — seuil minimal (défaut 0.5, comme pipeline.py)
+     */
+    const findBestMedicine = (ocrText, threshold = 0.5) => {
+      const query = normalizeText(ocrText);
+      if (query.length < 4) return null;
+
+      let bestMatch = null;
+      let bestScore = 0;
+
+      for (const med of BDPM_DATABASE) {
+        const normalizedNom = normalizeText(med.nom);
+
+        // Inclusion directe (score maximal)
+        if (query.includes(normalizedNom)) {
+          const score = sequenceMatcherRatio(query, normalizedNom);
+          if (score > bestScore) {
+            bestScore = score;
+            bestMatch = { ...med, confiance: score };
+          }
+          continue;
+        }
+
+        // Correspondance floue
+        const score = sequenceMatcherRatio(query, normalizedNom);
+        if (score >= threshold && score > bestScore) {
+          bestScore = score;
+          bestMatch = { ...med, confiance: score };
+        }
+      }
+
+      return bestMatch;
+    };
+
+    // ─── Extracteurs auxiliaires ──────────────────────────────────────────────
 
     const extractDosage = (text) => {
       const patterns = [
@@ -74,30 +130,12 @@
     };
 
     const extractFrequency = (text) => {
-      const patterns = [
-        /(\d+)\s*(?:FOIS|X)\s*PAR\s*JOUR/i,
-        /(\d+)\s*PAR\s*JOUR/i,
-        /MATIN\s*ET\s*SOIR/i,
-        /MATIN\s*MIDI\s*SOIR/i
-      ];
-      for (const pattern of patterns) {
-        const match = text.match(pattern);
-        if (match) {
-          if (pattern.source.includes('MATIN\\s*ET\\s*SOIR')) return 2;
-          if (pattern.source.includes('MATIN\\s*MIDI\\s*SOIR')) return 3;
-          return parseInt(match[1]) || 1;
-        }
-      }
+      const upper = text.toUpperCase();
+      if (/MATIN\s*MIDI\s*SOIR/.test(upper)) return 3;
+      if (/MATIN\s*ET\s*SOIR/.test(upper)) return 2;
+      const m = upper.match(/(\d+)\s*(?:FOIS|X)?\s*PAR\s*JOUR/);
+      if (m) return parseInt(m[1]) || 1;
       return 2;
-    };
-
-    const searchInBDPM = (text) => {
-      const normalizedText = normalizeText(text);
-      for (const med of BDPM_DATABASE) {
-        const normalizedNom = normalizeText(med.nom);
-        if (normalizedText.includes(normalizedNom)) return med;
-      }
-      return null;
     };
 
     // Composants Lucide
@@ -236,32 +274,43 @@
           await worker.terminate();
           
           setOcrStatus('Recherche BDPM...');
-          const lines = text.split('\n').filter(l => l.trim().length > 0);
+          // Équivalent de pipeline.py : on filtre les tokens trop courts (min_token_length=4)
+          const lines = text.split('\n').filter(l => l.trim().length >= 4);
+          const seenNames = new Set();
           const found = [];
-          
-          for (const line of lines) {
-            const med = searchInBDPM(line);
-            if (med) {
-              const dosage = extractDosage(line) || med.dosages[0];
-              const freq = extractFrequency(line);
-              const times = freq === 1 ? ['08:00'] : freq === 2 ? ['08:00', '20:00'] : ['08:00', '14:00', '20:00'];
-              const endDate = new Date();
-              endDate.setDate(endDate.getDate() + 7);
-              
-              found.push({
-                name: med.nom,
-                dci: med.dci,
-                dosage,
-                times,
-                endDate: endDate.toISOString().split('T')[0]
-              });
-            }
+
+          // Trier par confiance décroissante — comme process_prescription() dans pipeline.py
+          const candidates = lines
+            .map(line => ({ line, match: findBestMedicine(line, 0.5) }))
+            .filter(({ match }) => match !== null)
+            .sort((a, b) => b.match.confiance - a.match.confiance);
+
+          for (const { line, match } of candidates) {
+            // Dédoublonnage par nom (analogue au dédoublonnage par CIS dans pipeline.py)
+            if (seenNames.has(match.nom)) continue;
+            seenNames.add(match.nom);
+
+            const dosage = extractDosage(line) || match.dosages[0];
+            const freq = extractFrequency(line);
+            const times = freq === 1 ? ['08:00'] : freq === 2 ? ['08:00', '20:00'] : ['08:00', '14:00', '20:00'];
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+
+            found.push({
+              name: match.nom,
+              dci: match.dci,
+              dosage,
+              times,
+              endDate: endDate.toISOString().split('T')[0],
+              confiance: match.confiance
+            });
           }
           
           setDetectedMedications(found);
           if (found.length > 0) {
             setNewMedication(found[0]);
-            setOcrStatus(`✅ ${found.length} médicament(s) détecté(s)`);
+            const topConfiance = Math.round(found[0].confiance * 100);
+            setOcrStatus(`✅ ${found.length} médicament(s) détecté(s) — confiance : ${topConfiance}%`);
           } else {
             setOcrStatus('⚠️ Aucun médicament reconnu');
           }
@@ -977,7 +1026,7 @@
               </div>
               
               <div style={{ background: '#edf2f7', borderRadius: '12px', padding: '16px', marginTop: '20px', fontSize: '14px', color: '#4a5568' }}>
-                <strong>🤖 IA OCR + BDPM:</strong> {BDPM_DATABASE.length} médicaments français
+                <strong>🤖 OCR + BDPM:</strong> {BDPM_DATABASE.length} médicaments — matching flou avec score de confiance
               </div>
             </div>
           </div>
@@ -1012,7 +1061,12 @@
               <div style={{ background: 'white', borderRadius: '20px', padding: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }}>
                 {detectedMedications.length > 0 && (
                   <div style={{ padding: '12px', background: '#f0fff4', border: '2px solid #48bb78', borderRadius: '12px', marginBottom: '20px', color: '#22543d' }}>
-                    <strong>✅ Détecté automatiquement par l'IA</strong>
+                    <strong>✅ Détecté automatiquement</strong>
+                    {detectedMedications[0].confiance && (
+                      <span style={{ marginLeft: '8px', fontSize: '13px', opacity: 0.8 }}>
+                        — confiance : {Math.round(detectedMedications[0].confiance * 100)}%
+                      </span>
+                    )}
                   </div>
                 )}
                 
