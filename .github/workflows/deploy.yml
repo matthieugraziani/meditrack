@@ -1,9 +1,9 @@
-name: Deploy MediTrack
+name: Deploy React to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: ["main"]
+
   workflow_dispatch:
 
 permissions:
@@ -13,62 +13,41 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  # ── JOB 1 : Déploiement Frontend → GitHub Pages ──────────────────────────
-  deploy-frontend:
-    name: Deploy Frontend (GitHub Pages)
+  deploy:
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload frontend as Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          path: frontend/
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  # ── JOB 2 : Validation Backend Python ────────────────────────────────────
-  validate-backend:
-    name: Validate Backend (Python)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
+          node-version: 20
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # Installer sans EasyOCR/PyTorch (trop lourds pour CI) — on valide FastAPI et les imports
-          pip install fastapi uvicorn python-multipart rapidfuzz
+        working-directory: ./frontend
+        run: npm install
 
-      - name: Check syntax — backend files
-        run: |
-          python -m py_compile backend/ocr/matcher.py
-          python -m py_compile backend/ocr/pipeline.py
-          echo "✅ Syntax OK"
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
 
-      - name: Lint with Ruff
-        run: |
-          pip install ruff
-          ruff check backend/ --ignore E501
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend/dist
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
