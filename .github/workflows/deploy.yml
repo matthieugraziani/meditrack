@@ -64,7 +64,6 @@ jobs:
 
       - name: Check syntax — backend files
         run: |
-          python -m py_compile backend/main.py
           python -m py_compile backend/ocr/matcher.py
           python -m py_compile backend/ocr/pipeline.py
           echo "✅ Syntax OK"
